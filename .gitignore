@@ -166,3 +166,5 @@ cython_debug/
 /models/
 
 /outputs/
+
+model.pth
