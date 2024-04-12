@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "occ-anomaly-detection"
+version = "0.1.0"
+authors = [{ name = "Magazzù Gaetano", email = "gaetanomagazzu3@gmail.com" }]
+description = "OCC anomaly detection"
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["Pytorch", "Deep Learning", "CNN", "Anomalt Detection"]
+
+[project.urls]
+Repository = "https://github.com/MagazzuGaetano/OCC anomaly detection"
+
+[tool.ruff]
+show-fixes = true
+fix = true
+src = ["src"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+lines-between-types = 1
+combine-as-imports = true
+known-first-party = ["src"]
