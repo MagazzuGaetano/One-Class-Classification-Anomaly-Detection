@@ -3,16 +3,16 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "occ-anomaly-detection"
+name = "One-Class-Classification-Anomaly-Detection"
 version = "0.1.0"
 authors = [{ name = "Magazzù Gaetano", email = "gaetanomagazzu3@gmail.com" }]
-description = "OCC anomaly detection"
+description = "One-Class-Classification-Anomaly-Detection"
 readme = "README.md"
 license = { file = "LICENSE" }
-keywords = ["Pytorch", "Deep Learning", "CNN", "Anomalt Detection"]
+keywords = ["Pytorch", "Deep Learning", "CNN", "Anomaly Detection"]
 
 [project.urls]
-Repository = "https://github.com/MagazzuGaetano/OCC anomaly detection"
+Repository = "https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection"
 
 [tool.ruff]
 show-fixes = true

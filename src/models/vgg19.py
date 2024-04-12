@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from models.vgg import vgg19
+from src.models.vgg import vgg19
+
 
 class VGG19(torch.nn.Module):
     """
@@ -8,22 +9,23 @@ class VGG19(torch.nn.Module):
     level1: 64*2=128; level2: 128*2=256; level3: 256*4=1024; level4: 512*4=2048; level5: 512*4=2048
     Total dimension: 128 + 256 + 1024 + 2048 + 2048 = 5504
     """
+
     def __init__(self, gradient=False):
         super(VGG19, self).__init__()
-        features = vgg19(pretrained=True).features    # feature layers
+        features = vgg19(pretrained=True).features  # feature layers
         """ vgg.features
         Sequential(
           (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (1): ReLU(inplace)                                                        # self.relu1_1
           (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (3): ReLU(inplace)                                                        # self.relu1_2
-          
+
           (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
           (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (6): ReLU(inplace)
           (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-          (8): ReLU(inplace)  
-              
+          (8): ReLU(inplace)
+
           (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
           (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (11): ReLU(inplace)
@@ -33,7 +35,7 @@ class VGG19(torch.nn.Module):
           (15): ReLU(inplace)
           (16): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (17): ReLU(inplace)
-          
+
           (18): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
           (19): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (20): ReLU(inplace)
@@ -43,7 +45,7 @@ class VGG19(torch.nn.Module):
           (24): ReLU(inplace)
           (25): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (26): ReLU(inplace)
-          
+
           (27): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
           (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (29): ReLU(inplace)
@@ -53,7 +55,7 @@ class VGG19(torch.nn.Module):
           (33): ReLU(inplace)
           (34): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
           (35): ReLU(inplace)
-          
+
           (36): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
         )
         """
@@ -166,25 +168,21 @@ class VGG19(torch.nn.Module):
         # pool5 = self.pool5(relu5_4)
 
         out = {
-            'relu1_1': relu1_1,
-            'relu1_2': relu1_2,
-
-            'relu2_1': relu2_1,
-            'relu2_2': relu2_2,
-
-            'relu3_1': relu3_1,
-            'relu3_2': relu3_2,
-            'relu3_3': relu3_3,
-            'relu3_4': relu3_4,
-
-            'relu4_1': relu4_1,
-            'relu4_2': relu4_2,
-            'relu4_3': relu4_3,
-            'relu4_4': relu4_4,
-
-            'relu5_1': relu5_1,
-            'relu5_2': relu5_2,
-            'relu5_3': relu5_3,
-            'relu5_4': relu5_4,
+            "relu1_1": relu1_1,
+            "relu1_2": relu1_2,
+            "relu2_1": relu2_1,
+            "relu2_2": relu2_2,
+            "relu3_1": relu3_1,
+            "relu3_2": relu3_2,
+            "relu3_3": relu3_3,
+            "relu3_4": relu3_4,
+            "relu4_1": relu4_1,
+            "relu4_2": relu4_2,
+            "relu4_3": relu4_3,
+            "relu4_4": relu4_4,
+            "relu5_1": relu5_1,
+            "relu5_2": relu5_2,
+            "relu5_3": relu5_3,
+            "relu5_4": relu5_4,
         }
         return dict((key, value) for key, value in out.items() if key in feature_layers)

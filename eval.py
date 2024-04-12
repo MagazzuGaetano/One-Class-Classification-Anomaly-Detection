@@ -1,17 +1,15 @@
-from models.dfr import DFR
-from opencv_transforms import transforms as v2
-
 import cv2
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-from config import DATA_FOLDER
-from datasets.anomaly_dataset import AnomalyDataset
+from src.config import DATA_FOLDER
+from src.datasets.anomaly_dataset import AnomalyDataset
 
 from torchmetrics import ConfusionMatrix, MetricCollection
 from torchmetrics.classification import BinaryF1Score
-
+from opencv_transforms import transforms as v2
+from src.models.dfr import DFR
 
 
 def anomaly_cmap():
@@ -48,7 +46,7 @@ def estimate_segmentation_threshold(data_loader, model, fpr=0.05):
 
     print(
         "class: {:<19} \t classification reconstraction error: {} \t classification threshold: {}".format(
-            'good', round(errors.mean(), 6), round(T, 6)
+            "good", round(errors.mean(), 6), round(T, 6)
         )
     )
 
@@ -64,7 +62,6 @@ def display_anomalies(test_loader, model, classes, normal_seg_t, device):
             hotmaps = hotmaps.detach().cpu().numpy()
 
             for x, y, hotmap in zip(x_batch, y_batch, hotmaps):
-
                 prediction = np.any(hotmap > normal_seg_t)
 
                 hotmap = cv2.resize(hotmap, (x.shape[1], x.shape[2]))
@@ -84,7 +81,7 @@ def display_anomalies(test_loader, model, classes, normal_seg_t, device):
                 )
 
                 axarr[1].imshow(mask)
-                #axarr[1].imshow(np.transpose(hotmap, axes=(1, 2, 0)))
+                # axarr[1].imshow(np.transpose(hotmap, axes=(1, 2, 0)))
                 axarr[1].imshow(x, alpha=0.75)
                 axarr[1].set_title(
                     "output image: "
@@ -92,7 +89,6 @@ def display_anomalies(test_loader, model, classes, normal_seg_t, device):
                 )
 
                 plt.show()
-
 
 
 # configs
@@ -107,12 +103,12 @@ num_workers = 0
 batch_size = 2
 seed = 42
 
-backbone = 'vgg19'
-cnn_layers = ('relu4_1', 'relu4_2', 'relu4_3', 'relu4_4')
-upsample = 'bilinear'
+backbone = "vgg19"
+cnn_layers = ("relu4_1", "relu4_2", "relu4_3", "relu4_4")
+upsample = "bilinear"
 is_agg = True
-kernel_size = (4,4)
-stride = (4,4)
+kernel_size = (4, 4)
+stride = (4, 4)
 dilation = 1
 featmap_size = (224, 224)
 
@@ -133,7 +129,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # load train data files
 folder = DATA_FOLDER / "MVTecAD" / "wood"
 train_npy = np.load(folder / "train.npz")
-X_train, y_train = train_npy['x'], train_npy['y']
+X_train, y_train = train_npy["x"], train_npy["y"]
 
 # load test data files
 folder = DATA_FOLDER / "MVTecAD" / "wood"
@@ -141,54 +137,70 @@ test_npy = np.load(folder / "test.npz")
 X_test, y_test = test_npy["x"], test_npy["y"]
 
 # data augmentation
-transforms = v2.Compose([    
-  v2.Resize(512),                                             
-  v2.RandomCrop(224),                                             
-  v2.RandomVerticalFlip(p=0.5),
-  v2.RandomHorizontalFlip(p=0.5),
-  v2.RandomGrayscale(p=0.2),
-  #v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.1),
-  v2.ToTensor(),
-  v2.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
-])
+transforms = v2.Compose(
+    [
+        v2.Resize(512),
+        v2.RandomCrop(224),
+        v2.RandomVerticalFlip(p=0.5),
+        v2.RandomHorizontalFlip(p=0.5),
+        v2.RandomGrayscale(p=0.2),
+        # v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.1),
+        v2.ToTensor(),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ]
+)
 
-transforms_test = v2.Compose([
-  v2.Resize(224),
-  v2.ToTensor(),
-  v2.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
-])
+transforms_test = v2.Compose(
+    [
+        v2.Resize(224),
+        v2.ToTensor(),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ]
+)
 
 train_data = AnomalyDataset(labels=y_train, imgs=X_train, transform=transforms)
-train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=True)
+train_loader = torch.utils.data.DataLoader(
+    train_data,
+    batch_size=batch_size,
+    shuffle=True,
+    num_workers=num_workers,
+    drop_last=True,
+)
 
 test_data = AnomalyDataset(labels=y_test, imgs=X_test, transform=transforms_test)
-test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+test_loader = torch.utils.data.DataLoader(
+    test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers
+)
 
 # load model
-model = DFR(backbone=backbone, 
-  cnn_layers=cnn_layers,
-  upsample=upsample,
-  is_agg=is_agg,
-  kernel_size=kernel_size,
-  stride=stride,
-  dilation=dilation,
-  featmap_size=featmap_size,
-  device=DEVICE,
-  in_channels=in_channels,
-  latent_dim=latent_dim,
-  is_bn=is_bn,
-  data_loader=None).to(DEVICE)
+model = DFR(
+    backbone=backbone,
+    cnn_layers=cnn_layers,
+    upsample=upsample,
+    is_agg=is_agg,
+    kernel_size=kernel_size,
+    stride=stride,
+    dilation=dilation,
+    featmap_size=featmap_size,
+    device=DEVICE,
+    in_channels=in_channels,
+    latent_dim=latent_dim,
+    is_bn=is_bn,
+    data_loader=None,
+).to(DEVICE)
 
 # load the saved state dictionaries for the encoder and decoder
 checkpoint = torch.load("model.pth")
 model.load_state_dict(checkpoint["model"])
 
-metric_collection = MetricCollection({
-    "f1": BinaryF1Score(),
-    "cm": ConfusionMatrix(task="binary"),
-}).to(DEVICE)
+metric_collection = MetricCollection(
+    {
+        "f1": BinaryF1Score(),
+        "cm": ConfusionMatrix(task="binary"),
+    }
+).to(DEVICE)
 
-classes = ['good','color','hole','liquid','scratch','combined']
+classes = ["good", "color", "hole", "liquid", "scratch", "combined"]
 normal_seg_t = estimate_segmentation_threshold(train_loader, model, fpr=0.05)
 
 with torch.no_grad():
@@ -203,7 +215,7 @@ with torch.no_grad():
         hotmaps = model.get_hotmap(extracted_feat, reconstructed_feat)
 
         # predict anomalous images
-        preds = torch.any(hotmaps > normal_seg_t, dim=(1,2)).type(torch.int64)
+        preds = torch.any(hotmaps > normal_seg_t, dim=(1, 2)).type(torch.int64)
 
         # from multiclass to binary problem
         truth_values = labels
@@ -215,7 +227,7 @@ with torch.no_grad():
 
     print("\nTest Evaluation:")
     print(f"AVG F1: {cl_metrics['f1']}, AVG Reconstraction Error: {hotmaps.mean():.6f}")
-    fig_, ax_ = metric_collection['cm'].plot()
+    fig_, ax_ = metric_collection["cm"].plot()
     plt.show()
 
     metric_collection.reset()
