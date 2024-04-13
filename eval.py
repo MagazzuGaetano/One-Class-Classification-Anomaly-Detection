@@ -1,94 +1,19 @@
-import cv2
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
 from src.config import DATA_FOLDER
 from src.datasets.anomaly_dataset import AnomalyDataset
+from src.utils import (
+    display_anomalies,
+    estimate_segmentation_threshold,
+    evaluate_classification,
+    evaluate_localization,
+)
 
-from torchmetrics import ConfusionMatrix, MetricCollection
-from torchmetrics.classification import BinaryF1Score
+
 from opencv_transforms import transforms as v2
 from src.models.dfr import DFR
-
-
-def anomaly_cmap():
-    from matplotlib.colors import LinearSegmentedColormap
-
-    colors = [
-        (0.5, 0.5, 0.5, 1.0),
-        "yellow",
-    ]  # Gray for non-anomalies, Yellow for anomalies
-    cmap_name = "anomaly_cmap"
-    cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=2)
-
-    return cm
-
-
-def estimate_segmentation_threshold(data_loader, model, fpr=0.05):
-    errors = []
-    with torch.no_grad():
-        model.eval()
-
-        for x in data_loader:
-            images, labels = x
-            images = images.to(DEVICE)
-            labels = labels.to(DEVICE)
-
-            extracted_feat, reconstructed_feat = model(images)
-            error = model.get_hotmap(extracted_feat, reconstructed_feat)
-            errors.append(error.detach().cpu().numpy())
-
-    print("\nTheshold Estimation:")
-
-    errors = np.asarray(errors)
-    T = np.percentile(errors, 100 - fpr)
-
-    print(
-        "class: {:<19} \t classification reconstraction error: {} \t classification threshold: {}".format(
-            "good", round(errors.mean(), 6), round(T, 6)
-        )
-    )
-
-    return T
-
-
-def display_anomalies(test_loader, model, classes, normal_seg_t, device):
-    for x_batch, y_batch in test_loader:
-        if y_batch[0].item() == 2:
-            extracted_feat, reconstructed_feat = model(x_batch.to(device))
-
-            hotmaps = model.get_hotmap(extracted_feat, reconstructed_feat)
-            hotmaps = hotmaps.detach().cpu().numpy()
-
-            for x, y, hotmap in zip(x_batch, y_batch, hotmaps):
-                prediction = np.any(hotmap > normal_seg_t)
-
-                hotmap = cv2.resize(hotmap, (x.shape[1], x.shape[2]))
-                hotmap = np.expand_dims(hotmap, axis=0)
-                mask = np.where(hotmap > normal_seg_t, 1, 0)
-                mask = np.transpose(mask, axes=(1, 2, 0))
-
-                x = np.transpose(x, axes=(1, 2, 0)).detach().cpu().numpy()
-                x = (x - np.min(x)) / np.ptp(x)
-                x = (x * 255).astype(np.uint8)
-
-                f, axarr = plt.subplots(1, 2, figsize=(12, 4))
-                axarr[0].imshow(x)
-                axarr[0].set_title(
-                    "original image: "
-                    + f"GT: {classes[int(y)]}, anomaly detected: {prediction}"
-                )
-
-                axarr[1].imshow(mask)
-                # axarr[1].imshow(np.transpose(hotmap, axes=(1, 2, 0)))
-                axarr[1].imshow(x, alpha=0.75)
-                axarr[1].set_title(
-                    "output image: "
-                    + f"Threshold: {normal_seg_t} MaxValue: {hotmap.max():.6}"
-                )
-
-                plt.show()
 
 
 # configs
@@ -114,15 +39,15 @@ in_channels = 2048
 latent_dim = 148
 is_bn = True
 
+classes = ["good", "crack", "cut", "hole", "print"]
+
 # set reproducibility
 random_seed = seed
-
 torch.backends.cudnn.enabled = False
 torch.manual_seed(random_seed)
 
 # set device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 
 # load train data files
 folder = DATA_FOLDER / "MVTecAD" / "hazelnut"
@@ -132,7 +57,7 @@ X_train, y_train = train_npy["x"], train_npy["y"]
 # load test data files
 folder = DATA_FOLDER / "MVTecAD" / "hazelnut"
 test_npy = np.load(folder / "test.npz")
-X_test, y_test = test_npy["x"], test_npy["y"]
+X_test, y_test, y_mask_test = test_npy["x"], test_npy["y"], test_npy["z"]
 
 # data augmentation
 transforms = v2.Compose(
@@ -168,6 +93,7 @@ test_loader = torch.utils.data.DataLoader(
     test_data, batch_size=batch_size, shuffle=True, num_workers=num_workers
 )
 
+
 # load model
 model = DFR(
     backbone=backbone,
@@ -189,44 +115,38 @@ model = DFR(
 checkpoint = torch.load("model copy.pth")
 model.load_state_dict(checkpoint["model"])
 
-metric_collection = MetricCollection(
-    {
-        "f1": BinaryF1Score(),
-        "cm": ConfusionMatrix(task="binary"),
-    }
-).to(DEVICE)
 
-classes = ["good", "crack", "cut", "hole", "print"]
-normal_seg_t = estimate_segmentation_threshold(train_loader, model, fpr=0.05)
+# Evaluate Anomaly Localization on Test Set
+original_size = (1024, 1024)
+auc_score, fpr, tpr, pixel_auc_score, pixel_fpr, pixel_tpr = evaluate_localization(
+    X_test, y_mask_test, model, original_size, transforms_test, DEVICE
+)
 
-with torch.no_grad():
-    model.eval()
+print("\nTest Anomaly Classification & Localizzation:")
+print(f"AUC_ROC: {auc_score}, Pixel AUC_ROC: {pixel_auc_score}")
 
-    for x in test_loader:
-        images, labels = x
-        images = images.to(DEVICE)
-        labels = labels.to(DEVICE)
+plt.plot(fpr, tpr, marker=".")
+plt.title(f"AUC_ROC: {auc_score}")
+plt.ylabel("True Positive Rate")
+plt.xlabel("False Positive Rate")
+plt.show()
 
-        extracted_feat, reconstructed_feat = model(images)
-        hotmaps = model.get_hotmap(extracted_feat, reconstructed_feat)
+plt.plot(pixel_fpr, pixel_tpr, marker=".")
+plt.title(f"Pixel AUC_ROC: {pixel_auc_score}")
+plt.ylabel("True Positive Rate")
+plt.xlabel("False Positive Rate")
+plt.show()
 
-        # predict anomalous images
-        preds = torch.any(hotmaps > normal_seg_t, dim=(1, 2)).type(torch.int64)
+# Estimate Threshold on Train Set
+T = estimate_segmentation_threshold(train_loader, model, DEVICE, fpr=0.05)
+print("class: {:<19} \t threshold: {}".format("good", round(T, 6)))
 
-        # from multiclass to binary problem
-        truth_values = labels
-        truth_values[truth_values > 0] = 1
+# Evaluate Anomaly Classification on Test Set with Threshold
+f1, cm, rec_error = evaluate_classification(test_loader, model, DEVICE, T)
+print("\nTest Anomaly Classification:")
+print(f"AVG F1: {f1}, AVG Reconstraction Error: {rec_error:.6f}")
+fig_, ax_ = cm.plot()
+plt.show()
 
-        metric_collection.update(preds, truth_values)
-
-    cl_metrics = metric_collection.compute()
-
-    print("\nTest Evaluation:")
-    print(f"AVG F1: {cl_metrics['f1']}, AVG Reconstraction Error: {hotmaps.mean():.6f}")
-    fig_, ax_ = metric_collection["cm"].plot()
-    plt.show()
-
-    metric_collection.reset()
-
-
-display_anomalies(test_loader, model, classes, normal_seg_t, DEVICE)
+# Anomaly Localization Examples on Test Set
+display_anomalies(test_loader, model, classes, T, DEVICE)
