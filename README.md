@@ -1,10 +1,6 @@
 # One-Class-Classification-Anomaly-Detection
-One Class Classification Image Anomaly Detection
-
-Based on:
-- MVTecAD Dataset
-- DFR: Deep Feature Reconstruction for Unsupervised Anomaly Segmentation
-- Non Local Neural Networks
+A project based on One Class Classification Anomaly Detection to detect defects in hazelnuts like cracks, holes, cuts, ...
+This work is based on [DFR](https://github.com/YoungGod/DFR) with the addition of non-local blocks based on self-attention to capture the spatial context and improve the model anomaly recognition capabilities.
 
 Anomaly Classification & Localization:
 
@@ -16,3 +12,11 @@ Anomaly Classification & Localization:
 ![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/8a8a926c-634a-41aa-b254-04e61a668ae5)
 ![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/30825ad7-dfa7-451d-a4c4-34096aec7220)
 ![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/3920baea-2f7a-4b12-a400-27506c69d311)
+
+Citations:
+
+- (DFR): Yong Shi and Jie Yang and Zhiquan Qi, [DFR: Deep Feature Reconstruction for
+Unsupervised Anomaly Segmentation](https://arxiv.org/pdf/2012.07122.pdf), eprint arXiv:2012.07122, (2020)
+- MVTecAD Dataset
+- DFR: Deep Feature Reconstruction for Unsupervised Anomaly Segmentation
+- Non Local Neural Networks
