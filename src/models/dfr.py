@@ -52,6 +52,10 @@ class DFR(nn.Module):
             device=self.device,
         ).to(self.device)
 
+        # Freeze Extractor layers
+        for param in self.extractor.feature.parameters():
+            param.requires_grad = False
+
         # estimate autoencoder parameters
         if self.in_channels is None or self.latent_dim is None:
             if self.data_loader is None:

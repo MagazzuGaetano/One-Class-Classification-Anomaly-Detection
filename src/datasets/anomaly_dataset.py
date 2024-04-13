@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
 
+
 class AnomalyDataset(Dataset):
     def __init__(self, labels, imgs, transform=None):
         self.imgs = imgs
@@ -16,5 +17,4 @@ class AnomalyDataset(Dataset):
         if self.transform:
             x = self.transform(x)
 
-        x = x.float()
         return x, y

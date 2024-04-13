@@ -55,7 +55,7 @@ def estimate_segmentation_threshold(data_loader, model, fpr=0.05):
 
 def display_anomalies(test_loader, model, classes, normal_seg_t, device):
     for x_batch, y_batch in test_loader:
-        if y_batch[0].item() == 1:
+        if y_batch[0].item() == 2:
             extracted_feat, reconstructed_feat = model(x_batch.to(device))
 
             hotmaps = model.get_hotmap(extracted_feat, reconstructed_feat)
@@ -94,9 +94,7 @@ def display_anomalies(test_loader, model, classes, normal_seg_t, device):
 # configs
 lr = 1e-4
 wd = 5e-4
-max_epochs = 25
-channels = 3
-image_size = 224
+max_epochs = 250
 train_print_freq = 5
 val_print_freq = 1
 num_workers = 0
@@ -127,24 +125,22 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # load train data files
-folder = DATA_FOLDER / "MVTecAD" / "wood"
+folder = DATA_FOLDER / "MVTecAD" / "hazelnut"
 train_npy = np.load(folder / "train.npz")
 X_train, y_train = train_npy["x"], train_npy["y"]
 
 # load test data files
-folder = DATA_FOLDER / "MVTecAD" / "wood"
+folder = DATA_FOLDER / "MVTecAD" / "hazelnut"
 test_npy = np.load(folder / "test.npz")
 X_test, y_test = test_npy["x"], test_npy["y"]
 
 # data augmentation
 transforms = v2.Compose(
     [
-        v2.Resize(512),
-        v2.RandomCrop(224),
+        v2.Resize(224),
         v2.RandomVerticalFlip(p=0.5),
         v2.RandomHorizontalFlip(p=0.5),
-        v2.RandomGrayscale(p=0.2),
-        # v2.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.1),
+        v2.RandomGrayscale(p=0.5),
         v2.ToTensor(),
         v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
@@ -190,7 +186,7 @@ model = DFR(
 ).to(DEVICE)
 
 # load the saved state dictionaries for the encoder and decoder
-checkpoint = torch.load("model.pth")
+checkpoint = torch.load("model copy.pth")
 model.load_state_dict(checkpoint["model"])
 
 metric_collection = MetricCollection(
@@ -200,7 +196,7 @@ metric_collection = MetricCollection(
     }
 ).to(DEVICE)
 
-classes = ["good", "color", "hole", "liquid", "scratch", "combined"]
+classes = ["good", "crack", "cut", "hole", "print"]
 normal_seg_t = estimate_segmentation_threshold(train_loader, model, fpr=0.05)
 
 with torch.no_grad():

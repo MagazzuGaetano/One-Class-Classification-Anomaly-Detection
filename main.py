@@ -7,12 +7,13 @@ import numpy as np
 from src.config import DATA_FOLDER
 from src.datasets.anomaly_dataset import AnomalyDataset
 from src.train import train_loop
+from src.test import test_loop
 
 import matplotlib.pyplot as plt
 
 
 def plot_loss(train_metric, test_metric):
-    # plt.plot(test_metric, label="test")
+    plt.plot(test_metric, label="test")
     plt.plot(train_metric, label="train")
     plt.title("Loss per epoch")
     plt.ylabel("loss")
@@ -24,13 +25,11 @@ def plot_loss(train_metric, test_metric):
 # configs
 lr = 1e-4
 wd = 5e-4
-max_epochs = 25
-channels = 3
-image_size = 224
+max_epochs = 250
 train_print_freq = 5
 val_print_freq = 1
 num_workers = 0
-batch_size = 2
+batch_size = 4
 seed = 42
 
 backbone = "vgg19"
@@ -55,26 +54,21 @@ torch.manual_seed(random_seed)
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # load data files
-folder = DATA_FOLDER / "MVTecAD" / "wood"
+folder = DATA_FOLDER / "MVTecAD" / "hazelnut"
 train_npy = np.load(folder / "train.npz")
 X_train, y_train = train_npy["x"], train_npy["y"]
+
+val_npy = np.load(folder / "val.npz")
+X_val, y_val = val_npy["x"], val_npy["y"]
 
 
 # data augmentation
 transforms = v2.Compose(
     [
-        v2.RandomCrop(224),
+        v2.Resize(224),
+        v2.RandomGrayscale(p=0.5),
         v2.RandomVerticalFlip(p=0.5),
         v2.RandomHorizontalFlip(p=0.5),
-        v2.RandomGrayscale(p=0.2),
-        v2.ToTensor(),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ]
-)
-
-transforms_test = v2.Compose(
-    [
-        v2.Resize(224),
         v2.ToTensor(),
         v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
@@ -83,6 +77,15 @@ transforms_test = v2.Compose(
 train_data = AnomalyDataset(y_train, X_train, transforms)
 train_loader = torch.utils.data.DataLoader(
     train_data,
+    batch_size=batch_size,
+    shuffle=True,
+    num_workers=num_workers,
+    drop_last=True,
+)
+
+val_data = AnomalyDataset(y_val, X_val, transforms)
+val_loader = torch.utils.data.DataLoader(
+    val_data,
     batch_size=batch_size,
     shuffle=True,
     num_workers=num_workers,
@@ -112,6 +115,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
 
 train_results = {}
 train_results["train_loss"] = []
+train_results["val_loss"] = []
 
 best_epoch_idx = 0
 best_epoch_val = 10000
@@ -129,9 +133,14 @@ for epoch in range(max_epochs):
     )
     train_results["train_loss"].append(train_loss)
 
-    if train_loss < best_epoch_val:
+    # validation
+    if epoch % val_print_freq == 0:
+        val_loss = test_loop(val_loader, model, DEVICE)
+        train_results["val_loss"].append(val_loss)
+
+    if val_loss < best_epoch_val:
         best_epoch_idx = epoch
-        best_epoch_val = train_loss
+        best_epoch_val = val_loss
         best_model = model.state_dict()
         torch.save({"model": best_model}, "model.pth")
 
@@ -139,4 +148,4 @@ for epoch in range(max_epochs):
 torch.save({"model": best_model}, "model.pth")
 #######################################################################################################
 
-plot_loss(train_results["train_loss"], None)
+plot_loss(train_results["train_loss"], train_results["val_loss"])
