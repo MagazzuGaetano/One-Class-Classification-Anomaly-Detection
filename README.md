@@ -4,20 +4,22 @@ This work is based on [DFR](https://github.com/YoungGod/DFR) with the addition o
 
 Data used: [MVTecAD](https://www.mvtec.com/company/research/datasets/mvtec-ad/downloads)
 
-Anomaly Classification & Localization:
+Anomaly Classification & Localization Results:
+|                                                  **Models**                                                  | **AUC-ROC** | **Pixel AUC-ROC** |
+|:------------------------------------------------------------------------------------------------------------:|:-----------:|:-----------------:|
+|                                    [DFR](https://github.com/YoungGod/DFR)                                    |    0.9950   |       0.9826      |
+| [DFR](https://github.com/YoungGod/DFR) + [non-local blocks](https://github.com/tea1528/Non-Local-NN-Pytorch) |    0.9975   |       0.9836      |
 
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/ae95c66d-8a6f-490c-b176-da6da4bd8451)
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/77db2996-5fad-42f5-b8e1-3cf9a5707f97)
 
 Prediction examples:
-
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/3c183be3-5a11-4484-9e9a-4a22fe782ee7)
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/84ba81da-3ec1-41d9-bb1d-60a0e424fe6d)
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/8a8a926c-634a-41aa-b254-04e61a668ae5)
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/30825ad7-dfa7-451d-a4c4-34096aec7220)
-![image](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/3920baea-2f7a-4b12-a400-27506c69d311)
+![good](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/9599c5f8-c866-4cf4-9fd2-4e36df008fe9)
+![cut](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/be68735e-77d3-44b5-aa92-6e735429ae6b)
+![hole](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/240f8480-2b88-43bc-9ded-01fe0d54a48e)
+![crack](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/3281414e-24a6-4709-bce9-70647776b480)
+![print](https://github.com/MagazzuGaetano/One-Class-Classification-Anomaly-Detection/assets/30373288/19e68d03-f541-49e6-acf7-2664fd8f4599)
 
 References:
+
 
 - Yang, Jie, Yong Shi, and Zhiquan Qi. ["Dfr: Deep feature reconstruction for unsupervised anomaly segmentation."](https://arxiv.org/pdf/2012.07122.pdf) arXiv preprint arXiv:2012.07122 (2020).
 
