@@ -80,19 +80,19 @@ class DFR(nn.Module):
 
     def get_hotmap(self, x, x_hat):
         # compute heatmap B x (W // 4) x (H // 4)
-        loss = torch.sum((x - x_hat) ** 2, dim=1)
+        # loss = torch.sum((x - x_hat) ** 2, dim=1)
 
-        # loss = torch.mean((x - x_hat) ** 2, dim=1)
+        loss = torch.mean((x - x_hat) ** 2, dim=1)
         return loss
 
     def loss_fn(self, x, x_hat, dim=None):
         # B x 2048 x 56 x 56
-        loss = self.get_hotmap(x, x_hat)
+        # loss = self.get_hotmap(x, x_hat)
         # B x 56 x 56
-        loss = loss.mean(axis=(1, 2)) / (x.shape[0] * self.in_channels)
+        # loss = loss.mean(axis=(1, 2)) / (x.shape[0] * self.in_channels)
         # B x 1
 
-        # loss = torch.mean((x - x_hat) ** 2, dim=dim)
+        loss = torch.mean((x - x_hat) ** 2, dim=dim)
         return loss
 
     def estimate_parameters(self):

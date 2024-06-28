@@ -112,7 +112,7 @@ model = DFR(
 ).to(DEVICE)
 
 # load the saved state dictionaries for the encoder and decoder
-checkpoint = torch.load("model copy.pth")
+checkpoint = torch.load("non_local_dfr_model.pth")
 model.load_state_dict(checkpoint["model"])
 
 
